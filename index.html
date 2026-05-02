@@ -99,12 +99,13 @@
 
         // 旁 (Right parts)
         const tsukuris = [
-            "刂", "卩", "欠", "殳", "頁", "隹", "斤", "彡", "支", "攵", "斗", "也", "寸", "勺", "勿", "及", "巴", "乏", "尤", "且",
-            "令", "合", "各", "可", "交", "共", "圭", "夾", "夸", "奇", "奈", "奉", "奏", "奐", "契", "奥", "宜", "客", "室", "家",
-            "容", "宿", "寄", "庸", "庶", "康", "皮", "皮", "予", "令", "印", "各", "合", "吉", "同", "周", "唐", "善", "垂", "壮",
-            "奇", "奈", "奉", "奄", "奥", "定", "宜", "官", "客", "宮", "家", "寒", "寺", "専", "射", "尊", "導", "局", "屈", "居",
-            "展", "属", "山", "岳", "岸", "島", "峰", "崇", "崎", "崖", "崩", "嵐", "嶺", "巌", "州", "巣", "工", "左", "差", "己",
-            "巻", "市", "希", "常", "帳", "幕", "幡", "干", "平", "年", "幸", "幹", "幻", "幼", "幽", "幾", "底", "庭", "庫", "康"
+            "刂", "卩", "阝", "力", "刀", "丁", "十", "又", "几", "九", "乙", "二", "三", "大", "小", "上", "下", "口", "日", "月",
+            "山", "川", "土", "士", "工", "女", "子", "寸", "夕", "久", "乞", "也", "巴", "己", "巳", "干", "平", "午", "牛", "犬",
+            "手", "支", "文", "方", "斤", "欠", "止", "歹", "殳", "毛", "氏", "比", "父", "爻", "片", "牙", "王", "甘", "生", "用",
+            "田", "由", "甲", "申", "白", "目", "矢", "石", "示", "禾", "立", "米", "糸", "羊", "羽", "耳", "肉", "舌", "舟", "虫",
+            "衣", "西", "見", "角", "言", "谷", "豆", "貝", "赤", "走", "足", "身", "車", "辛", "辰", "酉", "里", "金", "長", "門",
+            "隹", "雨", "青", "非", "面", "革", "頁", "風", "食", "首", "馬", "骨", "高", "魚", "鳥", "鹿", "麻", "黄", "黒", "皮",
+            "令", "合", "各", "可", "同", "周", "官", "定", "寺", "局", "居", "屈", "展", "州", "巣", "市", "希", "常", "巻", "幸"
         ];
 
         // 脚 (Bottom parts)
@@ -142,15 +143,44 @@
             return array[Math.floor(Math.random() * array.length)];
         }
 
-        function generateRandomKunYomi() {
+        function hashStringToSeed(input) {
+            // FNV-1a (32-bit) for stable, fast string hashing
+            let hash = 0x811c9dc5;
+            for (let i = 0; i < input.length; i++) {
+                hash ^= input.charCodeAt(i);
+                hash = Math.imul(hash, 0x01000193);
+            }
+            return hash >>> 0;
+        }
+
+        function createSeededRandom(seed) {
+            // mulberry32
+            let t = seed >>> 0;
+            return function () {
+                t += 0x6D2B79F5;
+                let r = Math.imul(t ^ (t >>> 15), t | 1);
+                r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+                return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        function generateRandomKunYomi(componentsKey) {
             const headHiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ";
             const tailHiragana = headHiragana + "ん";
-            const length = Math.floor(Math.random() * 4) + 1;
-            let result = getRandom(headHiragana.split(''));
+            const rand = createSeededRandom(hashStringToSeed(componentsKey));
+            const headChars = headHiragana.split('');
+            const tailChars = tailHiragana.split('');
+            const length = Math.floor(rand() * 4) + 1;
+            let result = headChars[Math.floor(rand() * headChars.length)];
             for (let i = 1; i < length; i++) {
-                result += getRandom(tailHiragana.split(''));
+                result += tailChars[Math.floor(rand() * tailChars.length)];
             }
             return result;
+        }
+
+        function generateDeterministicOnYomi(componentsKey) {
+            const rand = createSeededRandom(hashStringToSeed(`on|${componentsKey}`));
+            return onYomis[Math.floor(rand() * onYomis.length)];
         }
 
         function getPreciseMetrics(char, fontSize, weight = 900) {
@@ -278,8 +308,14 @@
                 ctx.restore();
             }
 
-            document.getElementById('on-yomi').textContent = getRandom(onYomis);
-            document.getElementById('kun-yomi').textContent = generateRandomKunYomi();
+            const componentsKey = [
+                components.kanmuri ?? "",
+                components.hen,
+                components.tsukuri,
+                components.ashi ?? ""
+            ].join("|");
+            document.getElementById('on-yomi').textContent = generateDeterministicOnYomi(componentsKey);
+            document.getElementById('kun-yomi').textContent = generateRandomKunYomi(componentsKey);
         }
 
         function drawToCtx(tCtx, components, henX, tsukuriX, centerY, kanmuriY, ashiY, midFontSize, midScaleY, henScaleX, tsukuriScaleX, midTotalWidth, kanmuriM, ashiM) {
