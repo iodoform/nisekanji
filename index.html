@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偽漢字メーカー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 部首の網羅率が高い Noto Sans JP を採用 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+        * {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .btn-generate {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-generate:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="max-w-md w-full text-center space-y-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tighter">偽漢字メーカー</h1>
+        </div>
+
+        <!-- 漢字表示エリア -->
+        <div class="relative bg-white p-4 shadow-2xl rounded-2xl border-2 border-slate-200">
+            <div id="canvas-container" class="flex justify-center items-center bg-[#fafbfc] rounded-lg border border-slate-100 overflow-hidden" style="width: 320px; height: 320px; margin: 0 auto;">
+                <canvas id="mainCanvas" width="600" height="600" style="width: 300px; height: 300px;"></canvas>
+            </div>
+            
+            <!-- 練習帳風の補助線 -->
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
+                <div class="w-[300px] h-[300px] border border-blue-100 relative opacity-30">
+                    <div class="absolute top-1/2 left-0 w-full h-[1px] border-t border-dashed border-blue-300"></div>
+                    <div class="absolute left-1/2 top-0 h-full w-[1px] border-l border-dashed border-blue-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 読み情報表示 -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-full grid grid-cols-2 gap-6 border-b-8 border-slate-800">
+            <div class="text-left">
+                <span class="text-[10px] font-black text-slate-400 block uppercase tracking-widest mb-1">音読み</span>
+                <p id="on-yomi" class="text-2xl text-slate-800 font-black">-</p>
+            </div>
+            <div class="text-left border-l border-slate-100 pl-6">
+                <span class="text-[10px] font-black text-slate-400 block uppercase tracking-widest mb-1">訓読み</span>
+                <p id="kun-yomi" class="text-2xl text-slate-800 font-black">-</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <button onclick="generateKanji()" class="btn-generate w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-5 px-6 rounded-2xl shadow-xl text-xl flex items-center justify-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                新しい漢字を作る
+            </button>
+            
+            <button class="w-full text-slate-500 text-sm hover:text-slate-800 transition-colors font-bold" onclick="downloadKanji()">
+                画像を保存する (PNG)
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 構成要素データベースの大幅拡張 ---
+
+        // 冠 (Top parts)
+        const kanmuris = [
+            "宀", "艹", "⺮", "⻗", "罒", "穴", "亠", "冖", "⺌", "耂", "癶", "戸", "𠔉", "𠩺", "𥫗", "𠂉", "爫", "龠", "虍", "彑"
+        ];
+
+        // 偏 (Left parts)
+        const hens = [
+            "亻", "氵", "扌", "木", "火", "土", "口", "日", "月", "犭", "礻", "衤", "言", "饣", "钅", "阝", "女", "忄", "弓", "彳",
+            "爿", "片", "白", "目", "矢", "石", "禾", "立", "米", "糸", "舟", "虫", "血", "行", "衣", "身", "角", "谷", "豆", "豕",
+            "豸", "貝", "車", "酉", "里", "金", "阜", "隹", "青", "非", "面", "革", "骨", "鬼", "歯", "魚", "鳥", "鹿", "麻", "黄",
+            "黒", "鼠", "鼻", "黽", "鼎", "鼓", "龍", "龜", "龠", "爿", "幺", "广", "尸", "戸", "方", "无", "日", "曰", "歹", "殳",
+            "比", "毛", "氏", "气", "父", "爻", "片", "牙", "牛", "犬", "玄", "玉", "王", "甘", "生", "用", "田", "疋", "疒", "癶"
+        ];
+
+        // 旁 (Right parts)
+        const tsukuris = [
+            "刂", "卩", "欠", "殳", "頁", "隹", "斤", "彡", "支", "攵", "斗", "也", "寸", "勺", "勿", "及", "巴", "乏", "尤", "且",
+            "令", "合", "各", "可", "交", "共", "圭", "夾", "夸", "奇", "奈", "奉", "奏", "奐", "契", "奥", "宜", "客", "室", "家",
+            "容", "宿", "寄", "庸", "庶", "康", "皮", "皮", "予", "令", "印", "各", "合", "吉", "同", "周", "唐", "善", "垂", "壮",
+            "奇", "奈", "奉", "奄", "奥", "定", "宜", "官", "客", "宮", "家", "寒", "寺", "専", "射", "尊", "導", "局", "屈", "居",
+            "展", "属", "山", "岳", "岸", "島", "峰", "崇", "崎", "崖", "崩", "嵐", "嶺", "巌", "州", "巣", "工", "左", "差", "己",
+            "巻", "市", "希", "常", "帳", "幕", "幡", "干", "平", "年", "幸", "幹", "幻", "幼", "幽", "幾", "底", "庭", "庫", "康"
+        ];
+
+        // 脚 (Bottom parts)
+        const ashis = [
+            "心", "灬", "皿", "止", "𠫓", "𡗗", "氺", "𫝀", "貝", "大", "女", "手", "至", "臼", "方", "儿", "几", "力", "口", "土",
+            "夕", "大", "子", "寸", "小", "山", "工", "己", "巾", "干", "弓", "心", "戈", "手", "斤", "方", "日", "月", "木", "欠",
+            "止", "水", "火", "父", "牛", "犬", "王", "甘", "生", "用", "田", "疋", "目", "石", "禾", "竹", "米", "糸", "缶", "羊"
+        ];
+
+        // 音読みリスト
+        const onYomis = [
+            "アン", "イ", "イン", "ウ", "エキ", "エツ", "エン", "オウ", "オツ", "カ", "ガイ", "ガク", "カン", "キ", "ギ", "キャク",
+            "キュウ", "キョ", "キョク", "キン", "ギン", "ク", "グ", "ケイ", "ゲキ", "ケツ", "ケン", "ゲン", "コ", "ゴ", "コウ", "ゴウ",
+            "コク", "コン", "サイ", "ザイ", "サク", "サツ", "サン", "ザン", "シ", "ジ", "シキ", "ジキ", "シツ", "シャ", "ジャ", "シュ",
+            "ジュ", "シュウ", "ジュウ", "シュン", "ジョ", "ジョウ", "ショウ", "シン", "ジン", "スイ", "ズイ", "セイ", "ゼイ", "セキ",
+            "ゼツ", "セン", "ゼン", "ソ", "ゾ", "ソウ", "ゾウ", "ソク", "ゾク", "タ", "ダ", "タイ", "ダイ", "タク", "ダク", "タン",
+            "ダン", "チ", "チク", "チャク", "チュウ", "チョ", "チョウ", "ジョウ", "ツ", "テイ", "デイ", "テキ", "テツ", "テン", "デン",
+            "ト", "ド", "トウ", "ドウ", "トク", "ドク", "ナイ", "ナイ", "ナン", "ニ", "ニク", "ニュウ", "ニョ", "ネン", "ノウ", "ハ",
+            "バ", "ハイ", "バイ", "ハク", "バク", "ハン", "バン", "ビ", "ヒ", "ヒョウ", "ビョウ", "フ", "ブ", "フウ", "フク", "ブツ",
+            "フン", "ブン", "ヘイ", "ベイ", "ヘキ", "ヘン", "ベン", "ホ", "ボ", "ホウ", "ボウ", "ボク", "ボク", "マイ", "マク", "マン",
+            "ミ", "ミョウ", "ム", "メイ", "メン", "モウ", "モク", "モン", "ヤ", "ユ", "ユウ", "ヨ", "ヨウ", "ラ", "ライ", "ラク", "ラン",
+            "リ", "リュウ", "リョウ", "リョク", "リン", "ル", "レイ", "ロウ", "ロク", "ロン", "ワン"
+        ];
+
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const unifiedFont = '"Noto Sans JP"';
+
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+        offCanvas.width = 1000;
+        offCanvas.height = 1000;
+
+        function getRandom(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function generateRandomKunYomi() {
+            const headHiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ";
+            const tailHiragana = headHiragana + "ん";
+            const length = Math.floor(Math.random() * 4) + 1;
+            let result = getRandom(headHiragana.split(''));
+            for (let i = 1; i < length; i++) {
+                result += getRandom(tailHiragana.split(''));
+            }
+            return result;
+        }
+
+        function getPreciseMetrics(char, fontSize, weight = 900) {
+            const tempCanvas = document.createElement('canvas');
+            const tCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = fontSize * 2;
+            tempCanvas.height = fontSize * 2;
+            tCtx.font = `${weight} ${fontSize}px ${unifiedFont}`;
+            tCtx.textBaseline = "middle";
+            tCtx.textAlign = "center";
+            tCtx.fillText(char, fontSize, fontSize);
+            const m = tCtx.measureText(char);
+            return {
+                left: m.actualBoundingBoxLeft,
+                right: m.actualBoundingBoxRight,
+                top: m.actualBoundingBoxAscent,
+                bottom: m.actualBoundingBoxDescent,
+                width: m.actualBoundingBoxRight + m.actualBoundingBoxLeft,
+                height: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
+            };
+        }
+
+        async function generateKanji() {
+            await document.fonts.ready;
+            
+            const hasKanmuri = Math.random() < 0.50;
+            const hasAshi = Math.random() < 0.50;
+
+            const components = {
+                kanmuri: hasKanmuri ? getRandom(kanmuris) : null,
+                hen: getRandom(hens),
+                tsukuri: getRandom(tsukuris),
+                ashi: hasAshi ? getRandom(ashis) : null
+            };
+
+            offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
+            offCtx.fillStyle = "black";
+            offCtx.textAlign = "center";
+            offCtx.textBaseline = "middle";
+
+            let midFontSize = (hasKanmuri && hasAshi) ? 320 : 420;
+
+            const henM = getPreciseMetrics(components.hen, midFontSize);
+            const tsukuriM = getPreciseMetrics(components.tsukuri, midFontSize);
+            const kanmuriM = hasKanmuri ? getPreciseMetrics(components.kanmuri, 240) : null;
+            const ashiM = hasAshi ? getPreciseMetrics(components.ashi, 240) : null;
+
+            const henScaleX = 0.75, tsukuriScaleX = 0.75;
+            let midScaleY = 1.0;
+
+            let henX = 500 - 15, tsukuriX = 500 + 15;
+            const hGap = 12;
+            let henRightBound = henX + (henM.right * henScaleX);
+            let tsukuriLeftBound = tsukuriX - (tsukuriM.left * tsukuriScaleX);
+            
+            if (henRightBound >= tsukuriLeftBound) {
+                const overlap = henRightBound - tsukuriLeftBound + hGap;
+                henX -= overlap / 2; tsukuriX += overlap / 2;
+            }
+
+            const midTotalWidth = (tsukuriX + tsukuriM.right * tsukuriScaleX) - (henX - henM.left * henScaleX);
+
+            let centerY = 500, kanmuriY = 360, ashiY = 640;
+
+            const calcVBounds = () => {
+                let mTop = centerY - Math.max(henM.top, tsukuriM.top) * midScaleY;
+                let mBottom = centerY + Math.max(henM.bottom, tsukuriM.bottom) * midScaleY;
+                if (hasKanmuri) {
+                    let kb = kanmuriY + kanmuriM.bottom * 0.75;
+                    if (kb >= mTop) { let s = kb - mTop + 15; centerY += s; ashiY += s; mTop += s; mBottom += s; }
+                }
+                if (hasAshi) {
+                    let at = ashiY - ashiM.top * 0.75;
+                    if (mBottom >= at) { let s = mBottom - at + 15; ashiY += s; mBottom += s; }
+                }
+                const top = hasKanmuri ? (kanmuriY - kanmuriM.top * 0.75) : mTop;
+                const bot = hasAshi ? (ashiY + ashiM.bottom * 0.75) : mBottom;
+                return { top, bot, height: bot - top };
+            };
+
+            let vBounds = calcVBounds();
+
+            if (vBounds.height > midTotalWidth * 1.1) {
+                const midH = Math.max(henM.height, tsukuriM.height);
+                midScaleY = Math.max(0.4, (midH - (vBounds.height - midTotalWidth * 1.1)) / midH);
+                centerY = 500; kanmuriY = 360; ashiY = 640;
+                vBounds = calcVBounds();
+            }
+
+            drawToCtx(offCtx, components, henX, tsukuriX, centerY, kanmuriY, ashiY, midFontSize, midScaleY, henScaleX, tsukuriScaleX, midTotalWidth, kanmuriM, ashiM);
+
+            const imgData = offCtx.getImageData(0, 0, 1000, 1000);
+            const pixels = imgData.data;
+            let minX = 1000, maxX = 0, minY = 1000, maxY = 0, found = false;
+
+            for (let y = 0; y < 1000; y++) {
+                for (let x = 0; x < 1000; x++) {
+                    const alpha = pixels[(y * 1000 + x) * 4 + 3];
+                    if (alpha > 0) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
+                }
+            }
+
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (found) {
+                const charW = maxX - minX;
+                const charH = maxY - minY;
+                const targetSize = 550;
+
+                const fitScaleX = targetSize / charW;
+                const fitScaleY = targetSize / charH;
+
+                ctx.save();
+                ctx.translate(300, 300);
+                ctx.scale(fitScaleX, fitScaleY);
+                ctx.translate(-(minX + maxX) / 2, -(minY + maxY) / 2);
+                ctx.drawImage(offCanvas, 0, 0);
+                ctx.restore();
+            }
+
+            document.getElementById('on-yomi').textContent = getRandom(onYomis);
+            document.getElementById('kun-yomi').textContent = generateRandomKunYomi();
+        }
+
+        function drawToCtx(tCtx, components, henX, tsukuriX, centerY, kanmuriY, ashiY, midFontSize, midScaleY, henScaleX, tsukuriScaleX, midTotalWidth, kanmuriM, ashiM) {
+            tCtx.fillStyle = "black";
+            tCtx.save();
+            tCtx.translate(henX, centerY);
+            tCtx.scale(henScaleX, midScaleY);
+            tCtx.font = `900 ${midFontSize}px ${unifiedFont}`;
+            tCtx.fillText(components.hen, 0, 0);
+            tCtx.restore();
+
+            tCtx.save();
+            tCtx.translate(tsukuriX, centerY);
+            tCtx.scale(tsukuriScaleX, midScaleY);
+            tCtx.font = `900 ${midFontSize}px ${unifiedFont}`;
+            tCtx.fillText(components.tsukuri, 0, 0);
+            tCtx.restore();
+
+            if (components.kanmuri) {
+                const targetW = midTotalWidth * 1.25;
+                const sX = targetW / kanmuriM.width;
+                tCtx.save();
+                tCtx.translate(500, kanmuriY);
+                tCtx.scale(sX, 0.75);
+                tCtx.font = `900 240px ${unifiedFont}`;
+                tCtx.fillText(components.kanmuri, 0, 0);
+                tCtx.restore();
+            }
+
+            if (components.ashi) {
+                const targetW = midTotalWidth * 1.25;
+                const sX = targetW / ashiM.width;
+                tCtx.save();
+                tCtx.translate(500, ashiY);
+                tCtx.scale(sX, 0.75);
+                tCtx.font = `900 240px ${unifiedFont}`;
+                tCtx.fillText(components.ashi, 0, 0);
+                tCtx.restore();
+            }
+        }
+
+        function downloadKanji() {
+            const link = document.createElement('a');
+            link.download = `fake-kanji-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        window.onload = () => {
+            document.fonts.ready.then(() => generateKanji());
+        };
+    </script>
+</body>
+</html>
