@@ -89,24 +89,49 @@
         ];
 
         // 偏 (Left parts)
-        const hens = [
-            "亻", "氵", "扌", "木", "火", "土", "口", "日", "月", "犭", "礻", "衤", "言", "饣", "钅", "阝", "女", "忄", "弓", "彳",
-            "爿", "片", "白", "目", "矢", "石", "禾", "立", "米", "糸", "舟", "虫", "血", "行", "衣", "身", "角", "谷", "豆", "豕",
-            "豸", "貝", "車", "酉", "里", "金", "阜", "隹", "青", "非", "面", "革", "骨", "鬼", "歯", "魚", "鳥", "鹿", "麻", "黄",
-            "黒", "鼠", "鼻", "黽", "鼎", "鼓", "龍", "龜", "龠", "爿", "幺", "广", "尸", "戸", "方", "无", "日", "曰", "歹", "殳",
-            "比", "毛", "氏", "气", "父", "爻", "片", "牙", "牛", "犬", "玄", "玉", "王", "甘", "生", "用", "田", "疋", "疒", "癶"
+        const hensBase = [
+            "亻", "氵", "扌", "忄", "犭", "礻", "衤", "讠", "饣", "钅", "阝", "彳", "纟", "糹", "辶", "廴", "宀", "艹", "艸", "⺮",
+            "冫", "冖", "刂", "力", "勹", "匚", "匸", "厂", "厶", "又", "夂", "夊", "女", "子", "尸", "巾", "干", "幺", "广", "弓",
+            "彡", "彐", "彑", "心", "戸", "戶", "手", "支", "攵", "文", "斗", "斤", "方", "无", "曰", "月", "木", "欠", "止", "歹",
+            "殳", "比", "毛", "氏", "气", "水", "火", "爪", "父", "爻", "片", "牙", "牛", "犬", "王", "玉", "玄", "瓜", "瓦", "甘",
+            "生", "用", "田", "疋", "疒", "癶", "白", "皮", "皿", "目", "矛", "矢", "石", "示", "禾", "立", "米", "缶", "羊", "羽",
+            "老", "而", "耳", "肉", "臣", "自", "至", "臼", "舌", "舟", "艮", "色", "虍", "虫", "血", "行", "衣", "西", "見", "角",
+            "言", "谷", "豆", "豕", "豸", "貝", "赤", "走", "足", "身", "車", "辛", "辰", "邑", "酉", "里", "金", "長", "門", "阜",
+            "隶", "隹", "雨", "青", "非", "面", "革", "韋", "韭", "音", "頁", "風", "飛", "食", "首", "香", "馬", "骨", "高", "鬼"
         ];
 
         // 旁 (Right parts)
-        const tsukuris = [
-            "刂", "卩", "阝", "力", "刀", "丁", "十", "又", "几", "九", "乙", "二", "三", "大", "小", "上", "下", "口", "日", "月",
-            "山", "川", "土", "士", "工", "女", "子", "寸", "夕", "久", "乞", "也", "巴", "己", "巳", "干", "平", "午", "牛", "犬",
-            "手", "支", "文", "方", "斤", "欠", "止", "歹", "殳", "毛", "氏", "比", "父", "爻", "片", "牙", "王", "甘", "生", "用",
-            "田", "由", "甲", "申", "白", "目", "矢", "石", "示", "禾", "立", "米", "糸", "羊", "羽", "耳", "肉", "舌", "舟", "虫",
-            "衣", "西", "見", "角", "言", "谷", "豆", "貝", "赤", "走", "足", "身", "車", "辛", "辰", "酉", "里", "金", "長", "門",
-            "隹", "雨", "青", "非", "面", "革", "頁", "風", "食", "首", "馬", "骨", "高", "魚", "鳥", "鹿", "麻", "黄", "黒", "皮",
-            "令", "合", "各", "可", "同", "周", "官", "定", "寺", "局", "居", "屈", "展", "州", "巣", "市", "希", "常", "巻", "幸"
+        const tsukurisBase = [
+            "刂", "卩", "阝", "力", "刀", "丁", "十", "七", "八", "九", "几", "乙", "二", "人", "入", "儿", "又", "了", "乃", "乞",
+            "三", "于", "干", "士", "土", "工", "才", "下", "上", "口", "日", "月", "山", "川", "小", "大", "女", "子", "寸", "夕",
+            "久", "及", "丸", "也", "巴", "己", "巳", "已", "亡", "凡", "千", "午", "升", "斤", "方", "欠", "止", "歹", "殳", "比",
+            "毛", "氏", "气", "水", "火", "爪", "父", "爻", "片", "牙", "牛", "犬", "王", "玉", "玄", "瓜", "瓦", "甘", "生", "用",
+            "田", "由", "甲", "申", "白", "皮", "皿", "目", "矛", "矢", "石", "示", "禾", "立", "米", "糸", "羊", "羽", "老", "而",
+            "耳", "肉", "臣", "自", "至", "臼", "舌", "舟", "艮", "色", "虍", "虫", "血", "行", "衣", "西", "見", "角", "言", "谷",
+            "豆", "豕", "豸", "貝", "赤", "走", "足", "身", "車", "辛", "辰", "邑", "酉", "里", "金", "長", "門", "阜", "隶", "隹",
+            "雨", "青", "非", "面", "革", "韋", "音", "頁", "風", "飛", "食", "首", "香", "馬", "骨", "高", "令", "合", "各", "可"
         ];
+
+        // 6画以下の漢字を追加（既存配列は保持）
+        const sixStrokeKanji = [
+            "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "百", "千", "万",
+            "上", "下", "中", "大", "小", "山", "川", "土", "士", "工", "口", "日", "月", "田", "目",
+            "木", "本", "末", "未", "禾", "米", "火", "水", "氷", "犬", "牛", "羊", "鳥", "虫", "貝",
+            "人", "入", "出", "女", "子", "孑", "寸", "才", "夕", "久", "及", "丸", "亡", "凡", "刃",
+            "力", "刀", "丁", "了", "又", "与", "及", "乞", "也", "巴", "己", "巳", "已", "弓", "矢",
+            "手", "支", "文", "方", "斤", "欠", "止", "歹", "殳", "比", "毛", "氏", "父", "片", "牙",
+            "王", "玉", "甘", "生", "用", "由", "甲", "申", "白", "皮", "皿", "石", "示", "立", "羽",
+            "耳", "肉", "臣", "自", "至", "臼", "舌", "舟", "色", "血", "行", "衣", "西", "先", "年",
+            "会", "合", "各", "同", "寺", "早", "気", "休", "先", "名", "字", "安", "守", "式", "州",
+            "在", "地", "多", "好", "成", "有", "次", "死", "考", "老", "当", "共", "交", "光", "全",
+            "作", "体", "何", "住", "低", "位", "伝", "使", "近", "近", "歩", "来", "毎", "母", "気",
+            "池", "汗", "江", "汚", "灯", "灰", "列", "印", "向", "后", "合", "号", "吃", "吸", "因",
+            "団", "回", "寺", "尖", "曲", "有", "汎", "汐", "汰", "汲", "決", "氾", "灯", "老", "肉",
+            "至", "自", "色", "行", "衣", "西", "血", "先", "早", "年", "竹", "米", "糸", "缶", "羽"
+        ];
+
+        const hens = [...new Set([...hensBase, ...sixStrokeKanji])];
+        const tsukuris = [...new Set([...tsukurisBase, ...sixStrokeKanji])];
 
         // 脚 (Bottom parts)
         const ashis = [
@@ -208,10 +233,12 @@
             
             const hasKanmuri = Math.random() < 0.50;
             const hasAshi = Math.random() < 0.50;
+            const canDropHen = hasKanmuri || hasAshi;
+            const hasHen = canDropHen ? (Math.random() < 0.65) : true;
 
             const components = {
                 kanmuri: hasKanmuri ? getRandom(kanmuris) : null,
-                hen: getRandom(hens),
+                hen: hasHen ? getRandom(hens) : null,
                 tsukuri: getRandom(tsukuris),
                 ashi: hasAshi ? getRandom(ashis) : null
             };
@@ -223,7 +250,9 @@
 
             let midFontSize = (hasKanmuri && hasAshi) ? 320 : 420;
 
-            const henM = getPreciseMetrics(components.hen, midFontSize);
+            const henM = components.hen
+                ? getPreciseMetrics(components.hen, midFontSize)
+                : { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 };
             const tsukuriM = getPreciseMetrics(components.tsukuri, midFontSize);
             const kanmuriM = hasKanmuri ? getPreciseMetrics(components.kanmuri, 240) : null;
             const ashiM = hasAshi ? getPreciseMetrics(components.ashi, 240) : null;
@@ -232,16 +261,21 @@
             let midScaleY = 1.0;
 
             let henX = 500 - 15, tsukuriX = 500 + 15;
-            const hGap = 12;
-            let henRightBound = henX + (henM.right * henScaleX);
-            let tsukuriLeftBound = tsukuriX - (tsukuriM.left * tsukuriScaleX);
-            
-            if (henRightBound >= tsukuriLeftBound) {
-                const overlap = henRightBound - tsukuriLeftBound + hGap;
-                henX -= overlap / 2; tsukuriX += overlap / 2;
+            if (!components.hen) {
+                tsukuriX = 500;
+            } else {
+                const hGap = 12;
+                let henRightBound = henX + (henM.right * henScaleX);
+                let tsukuriLeftBound = tsukuriX - (tsukuriM.left * tsukuriScaleX);
+                if (henRightBound >= tsukuriLeftBound) {
+                    const overlap = henRightBound - tsukuriLeftBound + hGap;
+                    henX -= overlap / 2; tsukuriX += overlap / 2;
+                }
             }
 
-            const midTotalWidth = (tsukuriX + tsukuriM.right * tsukuriScaleX) - (henX - henM.left * henScaleX);
+            const midTotalWidth = components.hen
+                ? (tsukuriX + tsukuriM.right * tsukuriScaleX) - (henX - henM.left * henScaleX)
+                : tsukuriM.width * tsukuriScaleX;
 
             let centerY = 500, kanmuriY = 360, ashiY = 640;
 
@@ -310,7 +344,7 @@
 
             const componentsKey = [
                 components.kanmuri ?? "",
-                components.hen,
+                components.hen ?? "",
                 components.tsukuri,
                 components.ashi ?? ""
             ].join("|");
@@ -320,12 +354,14 @@
 
         function drawToCtx(tCtx, components, henX, tsukuriX, centerY, kanmuriY, ashiY, midFontSize, midScaleY, henScaleX, tsukuriScaleX, midTotalWidth, kanmuriM, ashiM) {
             tCtx.fillStyle = "black";
-            tCtx.save();
-            tCtx.translate(henX, centerY);
-            tCtx.scale(henScaleX, midScaleY);
-            tCtx.font = `900 ${midFontSize}px ${unifiedFont}`;
-            tCtx.fillText(components.hen, 0, 0);
-            tCtx.restore();
+            if (components.hen) {
+                tCtx.save();
+                tCtx.translate(henX, centerY);
+                tCtx.scale(henScaleX, midScaleY);
+                tCtx.font = `900 ${midFontSize}px ${unifiedFont}`;
+                tCtx.fillText(components.hen, 0, 0);
+                tCtx.restore();
+            }
 
             tCtx.save();
             tCtx.translate(tsukuriX, centerY);
